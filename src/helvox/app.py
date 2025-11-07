@@ -2,6 +2,8 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
 
+from platformdirs import user_config_path
+
 from helvox.ui.settings import SettingsDialog
 from helvox.utils.audio import Recorder
 
@@ -12,6 +14,10 @@ class App:
 
         self.recorder = Recorder(
             output_folder=Path.cwd() / "recordings", sample_rate=48000, channels=1
+        )
+
+        self.settings_path = (
+            user_config_path(appname="helvox", appauthor="noxenum") / "config.ini"
         )
 
         self.setup_window()
@@ -92,7 +98,7 @@ class App:
         main_frame.columnconfigure(0, weight=1)
 
     def show_settings(self) -> None:
-        """Show the settings dialog"""
+        self.recorder.load_settings(self.settings_path)
         dialog = SettingsDialog(self.root, self.recorder)
         result = dialog.show()
 
@@ -100,6 +106,10 @@ class App:
             # Apply settings
             self.recorder.update_output_folder(result["output_folder"])
             self.recorder.update_selected_device(result["device"])
+            self.recorder.speaker_id = result["speaker_id"]
+            self.recorder.speaker_dialect = result["speaker_dialect"]
+
+            self.recorder.save_settings(self.settings_path)
 
             self.start_monitoring()
 
@@ -171,4 +181,5 @@ class App:
         self.recorder.stop_monitoring()
         if self.recorder.recording:
             self.recorder.stop_recording()
+        self.root.destroy()
         self.root.destroy()

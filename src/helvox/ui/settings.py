@@ -94,7 +94,7 @@ class SettingsDialog:
         ttk.Label(speaker_frame, text="Dialect:", style="Title.TLabel").grid(
             column=0, row=1, padx=(0, 10), pady=8, sticky="w"
         )
-        self.dialect_var = tk.StringVar(value="AG")
+        self.dialect_var = tk.StringVar(value=self.recorder.speaker_dialect)
         self.speaker_dialect = ttk.Combobox(
             speaker_frame,
             textvariable=self.dialect_var,
@@ -270,7 +270,7 @@ class SettingsDialog:
 
         self.result = {
             "speaker_id": self.speaker_var.get().strip(),
-            "dialect": self.dialect_var.get(),
+            "speaker_dialect": self.dialect_var.get(),
             "output_folder": self.folder_var.get(),
             "device": self.device_var.get(),
         }

@@ -1,3 +1,4 @@
+import configparser
 from pathlib import Path
 from typing import Union
 
@@ -29,6 +30,7 @@ class Recorder:
 
         self.selected_device = ""
         self.speaker_id = "unknown"
+        self.speaker_dialect = "AG"
 
     def get_audio_devices(self) -> dict:
         devices = sd.query_devices()
@@ -60,7 +62,6 @@ class Recorder:
         return max(-60.0, min(0.0, db))
 
     def start_monitoring(self) -> None:
-        print(f"Starting monitoring on device: {self.selected_device}")
         if self.monitoring:
             self.stop_monitoring()
 
@@ -147,10 +148,11 @@ class Recorder:
             self.start_monitoring()
 
     def save_audio(self, filename: str) -> None:
-        if not self.output_folder.exists():
-            self.output_folder.mkdir(parents=True, exist_ok=True)
+        audio_path = self.output_folder / self.speaker_id / f"{filename}.flac"
 
-        audio_path = self.output_folder / f"{filename}.flac"
+        if not self.output_folder.parent.exists():
+            self.output_folder.parent.mkdir(parents=True, exist_ok=True)
+
         sf.write(audio_path, self.full_audio, self.sample_rate, format="FLAC")
 
     def play_audio_data(self):
@@ -169,3 +171,33 @@ class Recorder:
     def restart_monitoring(self) -> None:
         self.stop_monitoring()
         self.start_monitoring()
+
+    def save_settings(self, config_path: Path) -> None:
+        if not config_path.parent.exists():
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+
+        config = configparser.ConfigParser()
+        config["Settings"] = {
+            "output_folder": str(self.output_folder),
+            "selected_device": self.selected_device,
+            "speaker_id": self.speaker_id,
+            "speaker_dialect": self.speaker_dialect,
+        }
+
+        with open(config_path, "w") as configfile:
+            config.write(configfile)
+
+    def load_settings(self, config_path: Path) -> None:
+        if not config_path.exists():
+            return
+
+        config = configparser.ConfigParser()
+        config.read(config_path)
+
+        settings = config["Settings"]
+        self.output_folder = Path(
+            settings.get("output_folder", str(self.output_folder))
+        )
+        self.selected_device = settings.get("selected_device", self.selected_device)
+        self.speaker_id = settings.get("speaker_id", self.speaker_id)
+        self.speaker_dialect = settings.get("speaker_dialect", self.speaker_dialect)
