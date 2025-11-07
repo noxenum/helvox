@@ -20,9 +20,6 @@ class App:
         # Show settings dialog on startup
         self.show_settings()
 
-        # Start monitoring after UI is set up
-        self.start_monitoring()
-
     def setup_window(self) -> None:
         self.root.title("Helvox")
         self.root.geometry("800x600")
@@ -44,7 +41,7 @@ class App:
         settings_frame = ttk.Frame(main_frame)
         settings_frame.grid(row=0, column=0, columnspan=3, sticky="we", pady=(0, 10))
 
-        ttk.Button(settings_frame, text="⚙ Settings", command=self.show_settings).pack(
+        ttk.Button(settings_frame, text="Settings", command=self.show_settings).pack(
             side=tk.RIGHT
         )
 
@@ -67,7 +64,7 @@ class App:
 
         self.record_btn = ttk.Button(
             control_frame,
-            text="⏺ Start Recording",
+            text="Start Recording",
             command=self.toggle_recording,
             state=tk.NORMAL,
         )
@@ -75,7 +72,7 @@ class App:
 
         self.play_btn = ttk.Button(
             control_frame,
-            text="▶ Play",
+            text="Play",
             command=self.recorder.play_audio_data,
             state=tk.NORMAL,
         )
@@ -83,7 +80,7 @@ class App:
 
         self.save_btn = ttk.Button(
             control_frame,
-            text="💾 Save",
+            text="Save",
             command=self.save_audio,
             state=tk.NORMAL,
         )
@@ -104,7 +101,7 @@ class App:
             self.recorder.update_output_folder(result["output_folder"])
             self.recorder.update_selected_device(result["device"])
 
-            self.recorder.restart_monitoring()
+            self.start_monitoring()
 
     def update_level_meter(self) -> None:
         level = self.recorder.get_current_level()
@@ -162,10 +159,10 @@ class App:
     def toggle_recording(self) -> None:
         if not self.recorder.recording:
             self.recorder.start_recording()
-            self.record_btn.config(text="⏹ Stop Recording")
+            self.record_btn.config(text="Stop Recording")
         else:
             self.recorder.stop_recording()
-            self.record_btn.config(text="⏺ Start Recording")
+            self.record_btn.config(text="Start Recording")
 
     def save_audio(self) -> None:
         self.recorder.save_audio("test")

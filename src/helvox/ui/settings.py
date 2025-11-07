@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import filedialog, ttk
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 
 from helvox.utils.audio import Recorder
 
@@ -12,7 +13,7 @@ class SettingsDialog:
         # Create modal dialog
         self.dialog = tk.Toplevel(parent)
         self.dialog.title("Settings")
-        self.dialog.geometry("600x300")
+        self.dialog.geometry("650x550")
         self.dialog.resizable(False, False)
 
         # Make it modal
@@ -20,6 +21,21 @@ class SettingsDialog:
         self.dialog.grab_set()
 
         # Center the dialog
+        self.center_dialog(parent)
+
+        # Configure style
+        self.setup_styles()
+        self.setup_ui()
+
+        # Handle window close button
+        self.dialog.protocol("WM_DELETE_WINDOW", self.on_cancel)
+
+        # Bind Enter and Escape keys
+        self.dialog.bind("<Return>", lambda e: self.on_ok())
+        self.dialog.bind("<Escape>", lambda e: self.on_cancel())
+
+    def center_dialog(self, parent: tk.Tk) -> None:
+        """Center dialog on parent window."""
         self.dialog.update_idletasks()
         x = (
             parent.winfo_x()
@@ -33,87 +49,239 @@ class SettingsDialog:
         )
         self.dialog.geometry(f"+{x}+{y}")
 
-        self.setup_ui()
+    def setup_styles(self) -> None:
+        """Configure custom styles for better appearance."""
+        style = ttk.Style()
 
-        # Handle window close button
-        self.dialog.protocol("WM_DELETE_WINDOW", self.on_cancel)
+        # Custom styles
+        style.configure("Title.TLabel", font=("Segoe UI", 8))
+        style.configure("Info.TLabel", font=("Segoe UI", 9), foreground="#666")
+        style.configure("TLabelframe.Label", font=("Segoe UI", 9, "bold"))
+        style.configure("TLabelframe", padding=15)
+
+        # Button styles
+        style.configure("Accent.TButton", font=("Segoe UI", 9, "bold"))
 
     def setup_ui(self) -> None:
-        main_frame = ttk.Frame(self.dialog, padding="20")
-        main_frame.grid(row=0, column=0, sticky="nswe")
+        # Main container with padding
+        main_frame = ttk.Frame(self.dialog, padding="25")
+        main_frame.grid(row=0, column=0, sticky="nsew")
+
+        # Configure grid weights for responsiveness
+        self.dialog.rowconfigure(0, weight=1)
+        self.dialog.columnconfigure(0, weight=1)
+        main_frame.rowconfigure(3, weight=1)  # Allow spacing before buttons
+        main_frame.columnconfigure(0, weight=1)
+
+        # Speaker Settings
+        speaker_frame = ttk.LabelFrame(
+            main_frame, text="Speaker Configuration", padding="15"
+        )
+        speaker_frame.grid(row=0, column=0, sticky="ew", pady=(0, 15))
+        speaker_frame.columnconfigure(1, weight=1)
+
+        # Speaker ID
+        ttk.Label(speaker_frame, text="Speaker ID:", style="Title.TLabel").grid(
+            column=0, row=0, padx=(0, 10), pady=8, sticky="w"
+        )
+        self.speaker_var = tk.StringVar(value=self.recorder.speaker_id)
+        self.speaker_input = ttk.Entry(
+            speaker_frame, textvariable=self.speaker_var, font=("Segoe UI", 9)
+        )
+        self.speaker_input.grid(row=0, column=1, padx=(0, 5), pady=8, sticky="ew")
+
+        # Dialect
+        ttk.Label(speaker_frame, text="Dialect:", style="Title.TLabel").grid(
+            column=0, row=1, padx=(0, 10), pady=8, sticky="w"
+        )
+        self.dialect_var = tk.StringVar(value="AG")
+        self.speaker_dialect = ttk.Combobox(
+            speaker_frame,
+            textvariable=self.dialect_var,
+            state="readonly",
+            font=("Segoe UI", 9),
+            width=30,
+        )
+        self.speaker_dialect["values"] = (
+            "AG",
+            "BE",
+            "BS",
+            "GR",
+            "LU",
+            "SG",
+            "VS",
+            "ZH",
+        )
+        self.speaker_dialect.grid(row=1, column=1, padx=(0, 5), pady=8, sticky="w")
 
         # Output Folder Selection
-        folder_frame = ttk.LabelFrame(main_frame, text="Output Folder", padding="10")
-        folder_frame.grid(row=0, column=0, sticky="we", pady=(0, 15))
+        folder_frame = ttk.LabelFrame(main_frame, text="Output Folder", padding="15")
+        folder_frame.grid(row=1, column=0, sticky="ew", pady=(0, 15))
+        folder_frame.columnconfigure(0, weight=1)
+
+        # Folder path display
+        folder_display_frame = ttk.Frame(folder_frame)
+        folder_display_frame.grid(
+            row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8)
+        )
+        folder_display_frame.columnconfigure(0, weight=1)
 
         self.folder_var = tk.StringVar(value=str(self.recorder.output_folder))
-        ttk.Label(folder_frame, textvariable=self.folder_var, wraplength=400).grid(
-            row=0, column=0, sticky=tk.W, padx=5, pady=5
+        folder_label = ttk.Label(
+            folder_display_frame,
+            textvariable=self.folder_var,
+            wraplength=500,
+            relief="sunken",
+            padding=8,
+            background="white",
+            foreground="#333",
+            font=("Segoe UI", 9),
         )
-        ttk.Button(folder_frame, text="Browse...", command=self.select_folder).grid(
-            row=0, column=1, padx=5, pady=5
+        folder_label.grid(row=0, column=0, sticky="ew")
+
+        # Browse button
+        browse_btn = ttk.Button(
+            folder_frame, text="Browse...", command=self.select_folder, width=15
         )
+        browse_btn.grid(row=1, column=0, pady=(0, 0), sticky="e")
 
         # Audio Device Selection
         device_frame = ttk.LabelFrame(
-            main_frame, text="Audio Input Device", padding="10"
+            main_frame, text="Audio Input Device", padding="15"
         )
-        device_frame.grid(row=1, column=0, sticky="we", pady=(0, 15))
+        device_frame.grid(row=2, column=0, sticky="ew", pady=(0, 15))
+        device_frame.columnconfigure(0, weight=1)
+
+        # Device selection row
+        device_row = ttk.Frame(device_frame)
+        device_row.grid(row=0, column=0, sticky="ew")
+        device_row.columnconfigure(0, weight=1)
 
         self.device_var = tk.StringVar(value=self.recorder.selected_device or "")
         self.device_combo = ttk.Combobox(
-            device_frame, textvariable=self.device_var, state="readonly", width=50
+            device_row,
+            textvariable=self.device_var,
+            state="readonly",
+            font=("Segoe UI", 9),
         )
-        self.device_combo.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.device_combo.grid(row=0, column=0, padx=(0, 10), pady=5, sticky="ew")
 
-        ttk.Button(device_frame, text="Refresh", command=self.refresh_devices).grid(
-            row=0, column=1, padx=5, pady=5
+        refresh_btn = ttk.Button(
+            device_row, text="Refresh", command=self.refresh_devices, width=12
         )
+        refresh_btn.grid(row=0, column=1, pady=5)
+
+        # Info label
+        info_label = ttk.Label(
+            device_frame,
+            text="Select the microphone or audio input device to use for recording",
+            style="Info.TLabel",
+        )
+        info_label.grid(row=1, column=0, sticky="w", pady=(5, 0))
 
         # Populate devices
         self.refresh_devices()
 
-        # Buttons
+        # Spacer
+        ttk.Frame(main_frame).grid(row=3, column=0, sticky="nsew")
+
+        # Button frame with separator
+        ttk.Separator(main_frame, orient="horizontal").grid(
+            row=4, column=0, sticky="ew", pady=(0, 15)
+        )
+
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=2, column=0, pady=(10, 0))
+        button_frame.grid(row=5, column=0, pady=(0, 0))
 
-        ttk.Button(button_frame, text="OK", command=self.on_ok, width=12).grid(
-            row=0, column=0, padx=5
+        # Buttons with improved styling
+        cancel_btn = ttk.Button(
+            button_frame, text="Cancel", command=self.on_cancel, width=15
         )
-        ttk.Button(button_frame, text="Cancel", command=self.on_cancel, width=12).grid(
-            row=0, column=1, padx=5
-        )
+        cancel_btn.grid(row=0, column=0, padx=5)
 
-        # Configure grid
-        self.dialog.columnconfigure(0, weight=1)
-        main_frame.columnconfigure(0, weight=1)
+        ok_btn = ttk.Button(
+            button_frame,
+            text="Save Settings",
+            command=self.on_ok,
+            style="Accent.TButton",
+            width=15,
+        )
+        ok_btn.grid(row=0, column=1, padx=5)
+
+        # Set focus to OK button
+        ok_btn.focus_set()
 
     def select_folder(self) -> None:
+        """Open folder selection dialog."""
         folder = filedialog.askdirectory(
             title="Select Output Folder", initialdir=self.recorder.output_folder
         )
         if folder:
-            self.folder_var.set(folder)
+            self.folder_var.set(str(Path(folder)))
 
     def refresh_devices(self) -> None:
+        """Refresh available audio devices."""
         self.recorder.refresh_audio_devices()
         device_names = list(self.recorder.device_map.keys())
         self.device_combo["values"] = device_names
 
-        if device_names and not self.device_var.get():
-            self.device_var.set(device_names[0])
+        # Set default device if none selected
+        if device_names:
+            current = self.device_var.get()
+            if not current or current not in device_names:
+                self.device_var.set(device_names[0])
+        else:
+            self.device_var.set("")
+
+    def validate_inputs(self) -> bool:
+        """Validate user inputs before saving."""
+        speaker_id = self.speaker_var.get().strip()
+        if not speaker_id:
+            messagebox.showwarning(
+                "Invalid Input", "Please enter a Speaker ID.", parent=self.dialog
+            )
+            self.speaker_input.focus_set()
+            return False
+
+        folder_path = Path(self.folder_var.get())
+        if not folder_path.exists():
+            messagebox.showwarning(
+                "Invalid Folder",
+                "The selected output folder does not exist.",
+                parent=self.dialog,
+            )
+            return False
+
+        if not self.device_var.get():
+            messagebox.showwarning(
+                "No Device Selected",
+                "Please select an audio input device.",
+                parent=self.dialog,
+            )
+            self.device_combo.focus_set()
+            return False
+
+        return True
 
     def on_ok(self) -> None:
+        """Handle OK button click."""
+        if not self.validate_inputs():
+            return
+
         self.result = {
+            "speaker_id": self.speaker_var.get().strip(),
+            "dialect": self.dialect_var.get(),
             "output_folder": self.folder_var.get(),
             "device": self.device_var.get(),
         }
         self.dialog.destroy()
 
     def on_cancel(self) -> None:
+        """Handle Cancel button click."""
         self.result = None
         self.dialog.destroy()
 
     def show(self) -> dict | None:
+        """Show dialog and return result."""
         self.dialog.wait_window()
         return self.result

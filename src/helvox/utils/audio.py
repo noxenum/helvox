@@ -28,6 +28,7 @@ class Recorder:
         self.stream = None
 
         self.selected_device = ""
+        self.speaker_id = "unknown"
 
     def get_audio_devices(self) -> dict:
         devices = sd.query_devices()
@@ -59,6 +60,7 @@ class Recorder:
         return max(-60.0, min(0.0, db))
 
     def start_monitoring(self) -> None:
+        print(f"Starting monitoring on device: {self.selected_device}")
         if self.monitoring:
             self.stop_monitoring()
 
@@ -148,7 +150,7 @@ class Recorder:
         if not self.output_folder.exists():
             self.output_folder.mkdir(parents=True, exist_ok=True)
 
-        audio_path = Path(self.output_folder, f"{filename}.flac")
+        audio_path = self.output_folder / f"{filename}.flac"
         sf.write(audio_path, self.full_audio, self.sample_rate, format="FLAC")
 
     def play_audio_data(self):
