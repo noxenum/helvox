@@ -11,7 +11,7 @@ class SettingsDialog:
 
         # Create modal dialog
         self.dialog = tk.Toplevel(parent)
-        self.dialog.title("Setup")
+        self.dialog.title("Settings")
         self.dialog.geometry("600x300")
         self.dialog.resizable(False, False)
 
@@ -47,11 +47,11 @@ class SettingsDialog:
         folder_frame.grid(row=0, column=0, sticky="we", pady=(0, 15))
 
         self.folder_var = tk.StringVar(value=str(self.recorder.output_folder))
-        ttk.Label(folder_frame, textvariable=self.folder_var, wraplength=450).grid(
+        ttk.Label(folder_frame, textvariable=self.folder_var, wraplength=400).grid(
             row=0, column=0, sticky=tk.W, padx=5, pady=5
         )
         ttk.Button(folder_frame, text="Browse...", command=self.select_folder).grid(
-            row=1, column=0, padx=5, pady=5
+            row=0, column=1, padx=5, pady=5
         )
 
         # Audio Device Selection
@@ -116,5 +116,4 @@ class SettingsDialog:
 
     def show(self) -> dict | None:
         self.dialog.wait_window()
-        return self.result
         return self.result
