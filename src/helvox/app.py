@@ -53,11 +53,10 @@ class App:
 
         # Mic Level Meter
         level_frame = ttk.LabelFrame(main_frame, text="Input Level", padding="5")
-        level_frame.grid(row=1, column=0, columnspan=3, sticky="we", pady=5)
+        level_frame.grid(row=1, column=0, sticky="ns", pady=5, padx=5)
 
-        self.level_canvas = tk.Canvas(level_frame, height=30, bg="black")
-        self.level_canvas.grid(row=0, column=0, sticky="we", padx=5, pady=5)
-        level_frame.columnconfigure(0, weight=1)
+        self.level_canvas = tk.Canvas(level_frame, width=40, height=200, bg="black")
+        self.level_canvas.grid(row=0, column=0, sticky="ns", padx=5, pady=5)
 
         self.level_text = tk.StringVar(value="Level: 0 dB")
         ttk.Label(level_frame, textvariable=self.level_text).grid(
@@ -136,39 +135,60 @@ class App:
         width = self.level_canvas.winfo_width()
         height = self.level_canvas.winfo_height()
 
-        if width > 1:  # Only draw if canvas is visible
+        if height > 1:  # Only draw if canvas is visible
             # Clear canvas
             self.level_canvas.delete("all")
 
             # Convert dB to normalized value (0-1)
-            # Typical range: -60 dB (silence) to 0 dB (max)
             db_min = -60
             db_max = 0
             normalized = max(0, min(1, (level - db_min) / (db_max - db_min)))
 
-            # Calculate bar width
-            bar_width = int(width * normalized)
+            # Number of segments
+            num_segments = 20
+            segment_height = height / num_segments
+            segment_spacing = 2  # Pixels between segments
 
-            # Determine color based on level
-            if normalized < 0.7:
-                color = "green"
-            elif normalized < 0.9:
-                color = "yellow"
-            else:
-                color = "red"
+            # Draw segments from bottom to top
+            for i in range(num_segments):
+                segment_normalized = i / num_segments
+                segment_y = height - (i + 1) * segment_height
 
-            # Draw the level bar
-            if bar_width > 0:
+                # Determine if segment should be lit
+                is_lit = normalized >= segment_normalized
+
+                # Determine color based on position
+                if i >= int(num_segments * 0.9):  # Top 10% red
+                    color = "red" if is_lit else "darkred"
+                elif i >= int(num_segments * 0.7):  # Next 20% yellow
+                    color = "yellow" if is_lit else "darkgoldenrod4"
+                else:  # Bottom 70% green
+                    color = "green2" if is_lit else "darkgreen"
+
+                # Draw segment
                 self.level_canvas.create_rectangle(
-                    0, 0, bar_width, height, fill=color, outline=""
+                    2,  # Left margin
+                    segment_y + segment_spacing / 2,
+                    width - 2,  # Right margin
+                    segment_y + segment_height - segment_spacing / 2,
+                    fill=color,
+                    outline="",
                 )
 
-            # Draw tick marks every 10 dB
+            # Draw tick marks and dB labels every 10 dB
             for i in range(0, 7):
                 db_value = db_min + (i * 10)
-                x_pos = int(width * (db_value - db_min) / (db_max - db_min))
-                self.level_canvas.create_line(
-                    x_pos, 0, x_pos, height, fill="gray", width=1
+                y_pos = height * (1 - (db_value - db_min) / (db_max - db_min))
+                # Tick mark
+                self.level_canvas.create_line(0, y_pos, 5, y_pos, fill="gray", width=1)
+                # dB label
+                self.level_canvas.create_text(
+                    width + 15,
+                    y_pos,
+                    text=f"{db_value}",
+                    fill="white",
+                    anchor="w",
+                    font=("Arial", 7),
                 )
 
         # Schedule next update
