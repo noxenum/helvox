@@ -162,6 +162,41 @@ class Recorder:
     def check_playback(self) -> bool:
         return sd.get_stream().active
 
+    def get_duration(self) -> float:
+        if self.full_audio is not None:
+            return len(self.full_audio) / self.sample_rate
+        return 0.0
+
+    def get_waveform_data(self, num_points: int = 100) -> list[float]:
+        if self.full_audio is None:
+            return [0] * num_points
+
+        # Flatten audio data and normalize to [-1, 1]
+        data = self.full_audio.flatten()
+        max_val = np.max(np.abs(data))
+        if max_val > 0:
+            data = data / max_val
+
+        # Downsample by taking max and min in segments
+        samples_per_point = len(data) // (
+            num_points // 2
+        )  # We'll get 2 points per segment
+        if samples_per_point < 1:
+            return list(data) + [0] * (num_points - len(data))
+
+        waveform = []
+        for i in range(num_points // 2):
+            start = i * samples_per_point
+            end = start + samples_per_point
+            if start < len(data):
+                segment = data[start : min(end, len(data))]
+                # Get both max and min for symmetric display
+                waveform.extend([float(np.max(segment)), float(np.min(segment))])
+            else:
+                waveform.extend([0.0, 0.0])
+
+        return waveform[:num_points]  # Ensure we return exactly num_points
+
     def update_output_folder(self, folder: Union[str, Path]) -> None:
         self.output_folder = Path(folder)
 

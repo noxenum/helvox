@@ -64,9 +64,22 @@ class App:
             row=1, column=0, sticky=tk.W, padx=5
         )
 
+        # Waveform Visualization
+        waveform_frame = ttk.LabelFrame(main_frame, text="Recording", padding="5")
+        waveform_frame.grid(row=2, column=0, columnspan=3, sticky="we", pady=5)
+
+        self.waveform_canvas = tk.Canvas(waveform_frame, height=60, bg="black")
+        self.waveform_canvas.grid(row=0, column=0, sticky="we", padx=5, pady=5)
+        waveform_frame.columnconfigure(0, weight=1)
+
+        self.duration_text = tk.StringVar(value="Duration: 0.0 seconds")
+        ttk.Label(waveform_frame, textvariable=self.duration_text).grid(
+            row=1, column=0, sticky=tk.W, padx=5
+        )
+
         # Recording Controls
         control_frame = ttk.Frame(main_frame)
-        control_frame.grid(row=2, column=0, columnspan=3, pady=10)
+        control_frame.grid(row=3, column=0, columnspan=3, pady=10)
 
         self.record_btn = ttk.Button(
             control_frame,
@@ -78,7 +91,7 @@ class App:
 
         self.play_btn = ttk.Button(
             control_frame,
-            text="Play",
+            text="Preview",
             command=self.recorder.play_audio_data,
             state=tk.NORMAL,
         )
@@ -111,7 +124,7 @@ class App:
 
             self.recorder.save_settings(self.settings_path)
 
-            self.start_monitoring()
+        self.start_monitoring()
 
     def update_level_meter(self) -> None:
         level = self.recorder.get_current_level()
@@ -173,6 +186,42 @@ class App:
         else:
             self.recorder.stop_recording()
             self.record_btn.config(text="Start Recording")
+            self.update_waveform()
+
+    def update_waveform(self) -> None:
+        # Update duration text
+        duration = self.recorder.get_duration()
+        self.duration_text.set(f"Duration: {duration:.1f} seconds")
+
+        # Get waveform data
+        waveform = self.recorder.get_waveform_data()
+
+        # Get canvas dimensions
+        width = self.waveform_canvas.winfo_width()
+        height = self.waveform_canvas.winfo_height()
+        center_y = height // 2
+
+        # Clear canvas
+        self.waveform_canvas.delete("all")
+
+        # Draw vertical bars
+        bar_width = max(1, width // len(waveform) // 2)
+        for i, value in enumerate(waveform):
+            x = int((i / len(waveform)) * width)
+            # Scale the value to half the height (since we're drawing from center)
+            bar_height = int(value * (height / 2))
+            # Draw vertical bar centered at center_y
+            if bar_height != 0:  # Only draw if there's a visible amplitude
+                self.waveform_canvas.create_line(
+                    x,
+                    center_y - bar_height,
+                    x,
+                    center_y + bar_height,
+                    fill="orange red",
+                    width=bar_width,
+                    capstyle=tk.ROUND,
+                    joinstyle=tk.ROUND,
+                )
 
     def save_audio(self) -> None:
         self.recorder.save_audio("test")

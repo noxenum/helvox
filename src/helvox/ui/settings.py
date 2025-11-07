@@ -201,7 +201,7 @@ class SettingsDialog:
 
         ok_btn = ttk.Button(
             button_frame,
-            text="Save Settings",
+            text="OK",
             command=self.on_ok,
             style="Accent.TButton",
             width=15,
