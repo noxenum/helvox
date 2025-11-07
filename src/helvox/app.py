@@ -1,7 +1,8 @@
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, ttk
+from tkinter import ttk
 
+from helvox.ui.settings import SettingsDialog
 from helvox.utils.audio import Recorder
 
 
@@ -15,7 +16,9 @@ class App:
 
         self.setup_window()
         self.setup_ui()
-        self.refresh_audio_devices()
+
+        # Show settings dialog on startup
+        self.show_settings()
 
         # Start monitoring after UI is set up
         self.start_monitoring()
@@ -37,38 +40,17 @@ class App:
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky="nswe")
 
-        # Output Folder Selection
-        folder_frame = ttk.LabelFrame(main_frame, text="Output Folder", padding="5")
-        folder_frame.grid(row=1, column=0, columnspan=3, sticky="we", pady=5)
+        # Settings button at the top
+        settings_frame = ttk.Frame(main_frame)
+        settings_frame.grid(row=0, column=0, columnspan=3, sticky="we", pady=(0, 10))
 
-        self.folder_var = tk.StringVar(value=f"Output: {Path.cwd() / 'recordings'}")
-        ttk.Label(folder_frame, textvariable=self.folder_var, wraplength=500).grid(
-            row=0, column=0, sticky=tk.W, padx=5
+        ttk.Button(settings_frame, text="⚙ Settings", command=self.show_settings).pack(
+            side=tk.RIGHT
         )
-        ttk.Button(folder_frame, text="Select Folder", command=self.select_folder).grid(
-            row=0, column=1, padx=5
-        )
-
-        # Audio Device Selection
-        device_frame = ttk.LabelFrame(
-            main_frame, text="Audio Input Device", padding="5"
-        )
-        device_frame.grid(row=2, column=0, columnspan=3, sticky="we", pady=5)
-
-        self.device_var = tk.StringVar()
-        self.device_combo = ttk.Combobox(
-            device_frame, textvariable=self.device_var, state="readonly", width=60
-        )
-        self.device_combo.grid(row=0, column=0, padx=5)
-        self.device_combo.bind("<<ComboboxSelected>>", self.on_device_changed)
-
-        ttk.Button(
-            device_frame, text="Refresh", command=self.refresh_audio_devices
-        ).grid(row=0, column=1, padx=5)
 
         # Mic Level Meter
         level_frame = ttk.LabelFrame(main_frame, text="Input Level", padding="5")
-        level_frame.grid(row=3, column=0, columnspan=3, sticky="we", pady=5)
+        level_frame.grid(row=1, column=0, columnspan=3, sticky="we", pady=5)
 
         self.level_canvas = tk.Canvas(level_frame, height=30, bg="black")
         self.level_canvas.grid(row=0, column=0, sticky="we", padx=5, pady=5)
@@ -81,7 +63,7 @@ class App:
 
         # Recording Controls
         control_frame = ttk.Frame(main_frame)
-        control_frame.grid(row=5, column=0, columnspan=3, pady=10)
+        control_frame.grid(row=2, column=0, columnspan=3, pady=10)
 
         self.record_btn = ttk.Button(
             control_frame,
@@ -108,7 +90,21 @@ class App:
         self.save_btn.grid(row=0, column=2, padx=5)
 
         # Configure grid weights
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
+
+    def show_settings(self) -> None:
+        """Show the settings dialog"""
+        dialog = SettingsDialog(self.root, self.recorder)
+        result = dialog.show()
+
+        if result:
+            # Apply settings
+            self.recorder.update_output_folder(result["output_folder"])
+            self.recorder.update_selected_device(result["device"])
+
+            self.recorder.restart_monitoring()
 
     def update_level_meter(self) -> None:
         level = self.recorder.get_current_level()
@@ -159,31 +155,9 @@ class App:
         self.root.after(50, self.update_level_meter)
 
     def start_monitoring(self) -> None:
-        if self.device_var.get():
+        if self.recorder.selected_device:
             self.recorder.start_monitoring()
             self.update_level_meter()
-
-    def on_device_changed(self, event=None) -> None:
-        if self.device_var.get():
-            self.recorder.selected_device = self.device_var.get()
-            self.recorder.stop_monitoring()
-            self.recorder.start_monitoring()
-
-    def refresh_audio_devices(self) -> None:
-        self.recorder.refresh_audio_devices()
-
-        device_names = list(self.recorder.device_map.keys())
-        self.device_combo["values"] = device_names
-
-        if device_names:
-            self.device_var.set(device_names[0])
-            self.on_device_changed()
-
-    def select_folder(self) -> None:
-        folder = filedialog.askdirectory(title="Select Output Folder")
-        if folder:
-            self.recorder.update_output_folder(folder)
-            self.folder_var.set(f"Output: {folder}")
 
     def toggle_recording(self) -> None:
         if not self.recorder.recording:

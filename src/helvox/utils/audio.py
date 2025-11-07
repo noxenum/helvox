@@ -160,3 +160,10 @@ class Recorder:
 
     def update_output_folder(self, folder: Union[str, Path]) -> None:
         self.output_folder = Path(folder)
+
+    def update_selected_device(self, device_name: str) -> None:
+        self.selected_device = device_name
+
+    def restart_monitoring(self) -> None:
+        self.stop_monitoring()
+        self.start_monitoring()
