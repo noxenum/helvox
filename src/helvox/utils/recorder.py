@@ -45,12 +45,12 @@ class Recorder:
 
     def get_audio_devices(self) -> dict:
         devices = sd.query_devices()
+        devices = [dict(d) for d in devices]
         device_map = {}
 
         for idx, device in enumerate(devices):
-            if device["max_input_channels"] > 0:
-                device_name = f"{device['name']}"
-                device_map[device_name] = idx
+            if int(device.get("max_input_channels", 0)) > 0:
+                device_map[str(device.get("name", f"device_{idx}"))] = idx
 
         return device_map
 

@@ -1,5 +1,3 @@
-import struct
-
 import numpy as np
 import webrtcvad
 
@@ -77,8 +75,3 @@ def trim_silence(
 
     # Return trimmed audio in original format
     return audio[start_sample:end_sample]
-
-
-# Example usage:
-# audio = np.array([...])  # your audio data
-# trimmed = trim_silence(audio, sample_rate=48000)
