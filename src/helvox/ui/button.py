@@ -10,7 +10,7 @@ class RoundedButton(tk.Canvas):
         bg_color="#000000",
         fg_color="#FFFFFF",
         width=150,
-        height=40,
+        height=50,
         corner_radius=20,
         dot=False,
     ):

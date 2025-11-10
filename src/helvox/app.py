@@ -5,6 +5,7 @@ from tkinter import ttk
 from platformdirs import user_config_path
 
 from helvox.ui.button import RoundedButton
+from helvox.ui.rounded_canvas import RoundedCanvas
 from helvox.ui.settings import SettingsDialog
 from helvox.utils.recorder import Recorder
 
@@ -88,7 +89,9 @@ class App:
             row=4, column=0, sticky=tk.W, padx=5
         )
 
-        self.waveform_canvas_full = tk.Canvas(recording_frame, height=50, bg="black")
+        self.waveform_canvas_full = RoundedCanvas(
+            recording_frame, height=50, bg="black", corner_radius=20
+        )
         self.waveform_canvas_full.grid(
             row=0, column=2, sticky="we", padx=5, pady=5
         )  # Changed to "we"
@@ -100,7 +103,7 @@ class App:
             bg_color="#10A560",
             fg_color="#FFFFFF",
             width=120,
-            height=40,
+            height=50,
             corner_radius=20,
         )
         self.play_btn_full.grid(row=0, column=3, padx=5)
@@ -110,7 +113,9 @@ class App:
             row=1, column=2, sticky=tk.W, padx=5
         )
 
-        self.waveform_canvas_trimmed = tk.Canvas(recording_frame, height=50, bg="black")
+        self.waveform_canvas_trimmed = RoundedCanvas(
+            recording_frame, height=50, bg="black", corner_radius=20
+        )
         self.waveform_canvas_trimmed.grid(
             row=2, column=2, sticky="we", padx=5, pady=5
         )  # Changed to "we"
@@ -122,7 +127,7 @@ class App:
             bg_color="#10A560",
             fg_color="#FFFFFF",
             width=120,
-            height=40,
+            height=50,
             corner_radius=20,
         )
         self.play_btn_trimmed.grid(row=2, column=3, padx=5)
@@ -294,6 +299,9 @@ class App:
     def clear_waveform_canvas(self) -> None:
         self.waveform_canvas_full.delete("all")
         self.waveform_canvas_trimmed.delete("all")
+
+        self.waveform_canvas_full.draw_canvas()
+        self.waveform_canvas_trimmed.draw_canvas()
 
     def update_waveform(self) -> None:
         if self.recorder.full_audio is None or self.recorder.trimmed_audio is None:
