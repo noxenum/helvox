@@ -7,11 +7,11 @@ It provides a simple and efficient interface for collecting high-quality speech 
 
 ## Features
 
-- Record and save high-quality audio clips
+- Record and save high-quality audio clips (lossless)
 - Tailored for Swiss German dialect data collection
 - Built with Python and modern audio libraries
 - Cross-platform (developed primarily for Windows)
-- Automatic voice activity detection for consistent recordings
+- Automatic voice activity detection for consistent padding
 
 ---
 
@@ -88,5 +88,5 @@ See the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
 
-Helvox was built to support data collection and research in Swiss German linguistics.
+Helvox was built to support data collection and research in Swiss German linguistics (e.g., speech-to-text, text-to-speech).
 Special thanks to all contributors and researchers working on dialect preservation and computational linguistics.
