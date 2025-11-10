@@ -7,6 +7,8 @@ import sounddevice as sd
 import soundfile as sf
 from sounddevice import CallbackFlags
 
+from helvox.utils.trim import trim_silence
+
 
 class Recorder:
     def __init__(
@@ -144,35 +146,61 @@ class Recorder:
             if self.audio_data:
                 self.full_audio = np.concatenate(self.audio_data, axis=0)
 
+                self.trimmed_audio = trim_silence(
+                    self.full_audio,
+                    sample_rate=self.sample_rate,
+                    aggressiveness=2,
+                    frame_duration_ms=30,
+                    padding_duration_s=0.1,
+                )
+
             # Restart monitoring after recording stops
             self.start_monitoring()
 
     def save_audio(self, filename: str) -> None:
         audio_path = self.output_folder / self.speaker_id / f"{filename}.flac"
 
-        if not self.output_folder.parent.exists():
-            self.output_folder.parent.mkdir(parents=True, exist_ok=True)
+        if not audio_path.parent.exists():
+            audio_path.parent.mkdir(parents=True, exist_ok=True)
 
-        sf.write(audio_path, self.full_audio, self.sample_rate, format="FLAC")
+        sf.write(audio_path, self.trimmed_audio, self.sample_rate, format="FLAC")
 
-    def play_audio_data(self):
-        if self.full_audio is not None:
-            sd.play(self.full_audio, self.sample_rate)
+    def play_audio_data_full_audio(self):
+        self.play_audio_data(self.full_audio)
+
+    def play_audio_data_trimmed_audio(self):
+        self.play_audio_data(self.trimmed_audio)
+
+    def play_audio_data(self, audio):
+        if audio is not None:
+            sd.play(audio, self.sample_rate)
 
     def check_playback(self) -> bool:
         return sd.get_stream().active
 
-    def get_duration(self) -> float:
-        if self.full_audio is not None:
-            return len(self.full_audio) / self.sample_rate
+    def get_duration_full_audio(self) -> float:
+        return self.get_duration(self.full_audio)
+
+    def get_duration_trimmed_audio(self) -> float:
+        return self.get_duration(self.trimmed_audio)
+
+    def get_duration(self, audio) -> float:
+        if audio is not None:
+            return len(audio) / self.sample_rate
         return 0.0
 
-    def get_waveform_data(self, num_points: int = 100) -> list[float]:
-        if self.full_audio is None:
+    def get_waveform_full_audio(self, num_points: int = 100) -> list[float]:
+        return self.get_waveform_data(audio=self.full_audio, num_points=num_points)
+
+    def get_waveform_trimmed_audio(self, num_points: int = 100) -> list[float]:
+        return self.get_waveform_data(audio=self.trimmed_audio, num_points=num_points)
+
+    def get_waveform_data(self, audio, num_points: int = 100) -> list[float]:
+        if audio is None:
             return [0] * num_points
 
         # Flatten audio data and normalize to [-1, 1]
-        data = self.full_audio.flatten()
+        data = audio.flatten()
         max_val = np.max(np.abs(data))
         if max_val > 0:
             data = data / max_val

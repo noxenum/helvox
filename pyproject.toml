@@ -27,7 +27,8 @@ classifiers = [
 dependencies = [
     "sounddevice>=0.5.3",
     "soundfile>=0.13.1",
-    "platformdirs>=4.5.0"
+    "platformdirs>=4.5.0",
+    "webrtcvad>=2.0.10"
 ]
 
 [project.optional-dependencies]

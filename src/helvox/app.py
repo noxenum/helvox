@@ -4,8 +4,9 @@ from tkinter import ttk
 
 from platformdirs import user_config_path
 
+from helvox.ui.button import RoundedButton
 from helvox.ui.settings import SettingsDialog
-from helvox.utils.audio import Recorder
+from helvox.utils.recorder import Recorder
 
 
 class App:
@@ -38,76 +39,155 @@ class App:
         if icon_path.exists():
             self.root.iconbitmap(icon_path)
 
+        # Bind configure event
+        self.root.bind("<Configure>", self.configure_handler)
+
     def setup_ui(self) -> None:
         # Main frame
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky="nswe")
 
+        # Configure grid weights for responsiveness
+        self.root.rowconfigure(0, weight=1)
+        self.root.columnconfigure(0, weight=1)
+        main_frame.rowconfigure(2, weight=1)  # Allow spacing before buttons
+        main_frame.columnconfigure(0, weight=1)
+
         # Settings button at the top
         settings_frame = ttk.Frame(main_frame)
-        settings_frame.grid(row=0, column=0, columnspan=3, sticky="we", pady=(0, 10))
+        settings_frame.grid(row=0, column=0, sticky="we", pady=(0, 10))
+        settings_frame.columnconfigure(0, weight=1)
 
-        ttk.Button(settings_frame, text="Settings", command=self.show_settings).pack(
-            side=tk.RIGHT
+        settings_btn = RoundedButton(
+            settings_frame,
+            text="Settings",
+            command=self.show_settings,
+            bg_color="#E6E6E6",
+            fg_color="#363636",
+            width=120,
+            height=40,
+            corner_radius=20,
+            dot=False,
         )
+        settings_btn.grid(row=0, column=0, padx=5, sticky="e")
 
-        # Mic Level Meter
-        level_frame = ttk.LabelFrame(main_frame, text="Input Level", padding="5")
-        level_frame.grid(row=1, column=0, sticky="ns", pady=5, padx=5)
+        # Recording frame
+        recording_frame = ttk.LabelFrame(main_frame, text="Recording", padding="5")
+        recording_frame.grid(
+            row=1, column=0, sticky="we", pady=5, padx=5
+        )  # Changed to "we" for full width
 
-        self.level_canvas = tk.Canvas(level_frame, width=40, height=200, bg="black")
-        self.level_canvas.grid(row=0, column=0, sticky="ns", padx=5, pady=5)
+        # Configure recording frame columns - column 2 expands
+        recording_frame.columnconfigure(2, weight=1)
+
+        self.level_canvas = tk.Canvas(recording_frame, width=40, height=160, bg="black")
+        self.level_canvas.grid(row=0, rowspan=4, column=0, sticky="ns", padx=5, pady=5)
 
         self.level_text = tk.StringVar(value="Level: 0 dB")
-        ttk.Label(level_frame, textvariable=self.level_text).grid(
-            row=1, column=0, sticky=tk.W, padx=5
+        ttk.Label(recording_frame, textvariable=self.level_text).grid(
+            row=4, column=0, sticky=tk.W, padx=5
         )
 
-        # Waveform Visualization
-        waveform_frame = ttk.LabelFrame(main_frame, text="Recording", padding="5")
-        waveform_frame.grid(row=2, column=0, columnspan=3, sticky="we", pady=5)
+        self.waveform_canvas_full = tk.Canvas(recording_frame, height=50, bg="black")
+        self.waveform_canvas_full.grid(
+            row=0, column=2, sticky="we", padx=5, pady=5
+        )  # Changed to "we"
 
-        self.waveform_canvas = tk.Canvas(waveform_frame, height=60, bg="black")
-        self.waveform_canvas.grid(row=0, column=0, sticky="we", padx=5, pady=5)
-        waveform_frame.columnconfigure(0, weight=1)
-
-        self.duration_text = tk.StringVar(value="Duration: 0.0 seconds")
-        ttk.Label(waveform_frame, textvariable=self.duration_text).grid(
-            row=1, column=0, sticky=tk.W, padx=5
-        )
-
-        # Recording Controls
-        control_frame = ttk.Frame(main_frame)
-        control_frame.grid(row=3, column=0, columnspan=3, pady=10)
-
-        self.record_btn = ttk.Button(
-            control_frame,
-            text="Start Recording",
-            command=self.toggle_recording,
-            state=tk.NORMAL,
-        )
-        self.record_btn.grid(row=0, column=0, padx=5)
-
-        self.play_btn = ttk.Button(
-            control_frame,
+        self.play_btn_full = RoundedButton(
+            recording_frame,
             text="Preview",
-            command=self.recorder.play_audio_data,
-            state=tk.NORMAL,
+            command=self.recorder.play_audio_data_full_audio,
+            bg_color="#10A560",
+            fg_color="#FFFFFF",
+            width=120,
+            height=40,
+            corner_radius=20,
         )
-        self.play_btn.grid(row=0, column=1, padx=5)
+        self.play_btn_full.grid(row=0, column=3, padx=5)
 
-        self.save_btn = ttk.Button(
+        self.duration_text_full = tk.StringVar(value="Full | Duration: 0.0 seconds")
+        ttk.Label(recording_frame, textvariable=self.duration_text_full).grid(
+            row=1, column=2, sticky=tk.W, padx=5
+        )
+
+        self.waveform_canvas_trimmed = tk.Canvas(recording_frame, height=50, bg="black")
+        self.waveform_canvas_trimmed.grid(
+            row=2, column=2, sticky="we", padx=5, pady=5
+        )  # Changed to "we"
+
+        self.play_btn_trimmed = RoundedButton(
+            recording_frame,
+            text="Preview",
+            command=self.recorder.play_audio_data_trimmed_audio,
+            bg_color="#10A560",
+            fg_color="#FFFFFF",
+            width=120,
+            height=40,
+            corner_radius=20,
+        )
+        self.play_btn_trimmed.grid(row=2, column=3, padx=5)
+
+        self.duration_text_trimmed = tk.StringVar(
+            value="Trimmed | Duration: 0.0 seconds"
+        )
+        ttk.Label(recording_frame, textvariable=self.duration_text_trimmed).grid(
+            row=3, column=2, sticky=tk.W, padx=5
+        )
+
+        # Record Button
+        self.record_btn = RoundedButton(
+            recording_frame,
+            text="REC",
+            command=self.toggle_recording,
+            bg_color="#000000",
+            fg_color="#FFFFFF",
+            width=120,
+            height=40,
+            corner_radius=20,
+            dot=True,
+        )
+        self.record_btn.grid(row=4, column=3, padx=5)
+
+        # Spacer
+        ttk.Frame(main_frame).grid(row=3, column=0, sticky="nsew")
+
+        # Button frame with separator
+        ttk.Separator(main_frame, orient="horizontal").grid(
+            row=3, column=0, columnspan=2, sticky="ew", pady=(0, 15)
+        )
+
+        # Controls
+        control_frame = ttk.Frame(main_frame)
+        control_frame.grid(row=4, column=0, sticky="we", pady=(0, 0))
+        control_frame.columnconfigure(0, weight=1)
+
+        # Skip button at the bottom
+        settings_btn = RoundedButton(
             control_frame,
-            text="Save",
+            text="Skip",
             command=self.save_audio,
-            state=tk.NORMAL,
+            bg_color="#E6E6E6",
+            fg_color="#363636",
+            width=120,
+            height=40,
+            corner_radius=20,
+            dot=False,
         )
-        self.save_btn.grid(row=0, column=2, padx=5)
+        settings_btn.grid(row=0, column=0, padx=5, sticky="e")
 
-        # Configure grid weights
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(0, weight=1)
+        # Next button at the bottom
+        settings_btn = RoundedButton(
+            control_frame,
+            text="Next",
+            command=self.save_audio,
+            bg_color="#3B32B3",
+            fg_color="#F5F5F5",
+            width=120,
+            height=40,
+            corner_radius=20,
+            dot=False,
+        )
+        settings_btn.grid(row=0, column=1, padx=5, sticky="e")
 
     def show_settings(self) -> None:
         self.recorder.load_settings(self.settings_path)
@@ -202,37 +282,72 @@ class App:
     def toggle_recording(self) -> None:
         if not self.recorder.recording:
             self.recorder.start_recording()
-            self.record_btn.config(text="Stop Recording")
+            self.clear_waveform_canvas()
+            self.record_btn.config(
+                text="Stop Recording", bg_color="#8B0000", dot=False
+            )  # Dark red
         else:
             self.recorder.stop_recording()
-            self.record_btn.config(text="Start Recording")
+            self.record_btn.config(text="REC", bg_color="#000000", dot=True)  # Black
             self.update_waveform()
 
+    def clear_waveform_canvas(self) -> None:
+        self.waveform_canvas_full.delete("all")
+        self.waveform_canvas_trimmed.delete("all")
+
     def update_waveform(self) -> None:
+        if self.recorder.full_audio is None or self.recorder.trimmed_audio is None:
+            return
+
         # Update duration text
-        duration = self.recorder.get_duration()
-        self.duration_text.set(f"Duration: {duration:.1f} seconds")
+        duration_full = self.recorder.get_duration_full_audio()
+        self.duration_text_full.set(f"Full | Duration: {duration_full:.1f} seconds")
+
+        duration_trimmed = self.recorder.get_duration_trimmed_audio()
+        self.duration_text_trimmed.set(
+            f"Trimmed | Duration: {duration_trimmed:.1f} seconds"
+        )
 
         # Get waveform data
-        waveform = self.recorder.get_waveform_data()
+        waveform_full = self.recorder.get_waveform_full_audio()
+        waveform_trimmed = self.recorder.get_waveform_trimmed_audio()
 
         # Get canvas dimensions
-        width = self.waveform_canvas.winfo_width()
-        height = self.waveform_canvas.winfo_height()
+        width = self.waveform_canvas_full.winfo_width()
+        height = self.waveform_canvas_full.winfo_height()
         center_y = height // 2
 
         # Clear canvas
-        self.waveform_canvas.delete("all")
+        self.clear_waveform_canvas()
 
-        # Draw vertical bars
-        bar_width = max(1, width // len(waveform) // 2)
-        for i, value in enumerate(waveform):
-            x = int((i / len(waveform)) * width)
+        # Draw vertical bars (full)
+        bar_width = max(1, width // len(waveform_full) // 2)
+        for i, value in enumerate(waveform_full):
+            x = int((i / len(waveform_full)) * width)
             # Scale the value to half the height (since we're drawing from center)
             bar_height = int(value * (height / 2))
             # Draw vertical bar centered at center_y
             if bar_height != 0:  # Only draw if there's a visible amplitude
-                self.waveform_canvas.create_line(
+                self.waveform_canvas_full.create_line(
+                    x,
+                    center_y - bar_height,
+                    x,
+                    center_y + bar_height,
+                    fill="orange red",
+                    width=bar_width,
+                    capstyle=tk.ROUND,
+                    joinstyle=tk.ROUND,
+                )
+
+        # Draw vertical bars (trimmed)
+        bar_width = max(1, width // len(waveform_trimmed) // 2)
+        for i, value in enumerate(waveform_trimmed):
+            x = int((i / len(waveform_trimmed)) * width)
+            # Scale the value to half the height (since we're drawing from center)
+            bar_height = int(value * (height / 2))
+            # Draw vertical bar centered at center_y
+            if bar_height != 0:  # Only draw if there's a visible amplitude
+                self.waveform_canvas_trimmed.create_line(
                     x,
                     center_y - bar_height,
                     x,
@@ -245,6 +360,9 @@ class App:
 
     def save_audio(self) -> None:
         self.recorder.save_audio("test")
+
+    def configure_handler(self, event):
+        self.update_waveform()
 
     def on_closing(self) -> None:
         self.recorder.stop_monitoring()

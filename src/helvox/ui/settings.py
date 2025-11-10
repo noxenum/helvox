@@ -2,7 +2,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from helvox.utils.audio import Recorder
+from helvox.utils.recorder import Recorder
 
 
 class SettingsDialog:
@@ -88,11 +88,11 @@ class SettingsDialog:
         self.speaker_input = ttk.Entry(
             speaker_frame, textvariable=self.speaker_var, font=("Segoe UI", 9)
         )
-        self.speaker_input.grid(row=0, column=1, padx=(0, 5), pady=8, sticky="ew")
+        self.speaker_input.grid(row=1, column=0, padx=(0, 5), pady=8, sticky="ew")
 
         # Dialect
         ttk.Label(speaker_frame, text="Dialect:", style="Title.TLabel").grid(
-            column=0, row=1, padx=(0, 10), pady=8, sticky="w"
+            column=1, row=0, padx=(0, 10), pady=8, sticky="w"
         )
         self.dialect_var = tk.StringVar(value=self.recorder.speaker_dialect)
         self.speaker_dialect = ttk.Combobox(
