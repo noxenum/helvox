@@ -25,7 +25,6 @@ class SettingsDialog:
 
         # Set app icon
         icon_path = Path(__file__).parent.parent / "resources" / "icons" / "app.ico"
-        print(icon_path)
         if icon_path.exists():
             self.dialog.iconbitmap(icon_path)
 

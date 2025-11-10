@@ -46,6 +46,9 @@ class Recorder:
         self.output_index = {}
         self.skipped_ids = []
 
+        self.open_ids = []
+        self.total_duration = 0
+
     def get_audio_devices(self) -> dict:
         devices = sd.query_devices()
         device_map = {}
@@ -168,13 +171,15 @@ class Recorder:
             # Restart monitoring after recording stops
             self.start_monitoring()
 
-    def save_audio(self, filename: str) -> None:
+    def save_audio(self, filename: str) -> float:
         audio_path = self.output_folder / self.speaker_id / "audio" / f"{filename}.flac"
 
         if not audio_path.parent.exists():
             audio_path.parent.mkdir(parents=True, exist_ok=True)
 
         sf.write(audio_path, self.trimmed_audio, self.sample_rate, format="FLAC")
+
+        return self.get_duration_trimmed_audio()
 
     def play_audio_data_full_audio(self):
         self.play_audio_data(self.full_audio)
@@ -281,13 +286,38 @@ class Recorder:
         self.output_file = self.output_folder / self.speaker_id / "output.json"
         self.skipped_file = self.output_folder / self.speaker_id / "skipped.txt"
 
+        self.load_data()
+
+    def load_data(self) -> None:
         self.load_input_data()
         self.load_output_data()
         self.load_skipped_ids()
 
+        self.open_ids = [
+            idx
+            for idx in list(self.input_index.keys())
+            if (
+                idx not in list(self.output_index.keys())
+                and (idx not in self.skipped_ids)
+            )
+        ]
+
+        self.total_duration = self.calc_total_duration()
+
+    def calc_total_duration(self) -> float:
+        return sum(
+            [
+                sample["duration_s"]
+                for sample in self.output_data
+                if "duration_s" in sample
+            ]
+        )
+
     def load_input_data(self) -> None:
         if len(self.input_file) > 0 and Path(self.input_file).exists():
-            self.input_data = read_dataset(Path(self.input_file))
+            self.input_data = read_dataset(
+                Path(self.input_file), dialect_filter=self.speaker_dialect.lower()
+            )
             self.input_index = {str(d["id"]): d for d in self.input_data}
         else:
             self.input_data = []
@@ -322,7 +352,13 @@ class Recorder:
             f.write(f"{id}\n")
 
     def add_sample(
-        self, id: str, text_de: str, text_ch: str, dialect: str, audio_path: str
+        self,
+        id: str,
+        text_de: str,
+        text_ch: str,
+        dialect: str,
+        audio_path: str,
+        duration_s: float,
     ) -> None:
         sample = {
             "id": id,
@@ -330,6 +366,7 @@ class Recorder:
             "ch": text_ch,
             "dialect": dialect.lower(),
             "audio": audio_path,
+            "duration_s": duration_s,
         }
 
         self.output_data.append(sample)
@@ -339,3 +376,10 @@ class Recorder:
 
         with open(self.output_file, mode="w", encoding="utf-8") as f:
             json.dump(self.output_data, f, ensure_ascii=False, indent=4)
+
+        self.total_duration = self.calc_total_duration()
+
+    def get_next_id(self) -> str:
+        if not self.open_ids:
+            raise Exception("Empty list")
+        return self.open_ids.pop(0)

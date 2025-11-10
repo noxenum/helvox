@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
+from typing import Optional
 
 
-def read_dataset(path: Path) -> list[dict]:
+def read_dataset(path: Path, dialect_filter: Optional[str] = None) -> list[dict]:
     """
     Reads a JSON dataset from the given path and validates its structure.
     Expected format:
@@ -18,8 +19,13 @@ def read_dataset(path: Path) -> list[dict]:
     if not isinstance(data, list):
         raise ValueError(f"Invalid format: expected a list, got {type(data).__name__}")
 
+    if dialect_filter:
+        filtered_data = [sample for sample in data if f"ch_{dialect_filter}" in sample]
+    else:
+        filtered_data = data
+
     # Validate each item in the list
-    for i, item in enumerate(data):
+    for i, item in enumerate(filtered_data):
         if not isinstance(item, dict):
             raise ValueError(
                 f"Invalid item at index {i}: expected dict, got {type(item).__name__}"
@@ -29,4 +35,4 @@ def read_dataset(path: Path) -> list[dict]:
                 f"Missing required keys in item at index {i}: found {list(item.keys())}"
             )
 
-    return data
+    return filtered_data

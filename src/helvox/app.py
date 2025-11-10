@@ -173,9 +173,7 @@ class App:
         self.waveform_canvas_full = RoundedCanvas(
             recording_frame, height=50, bg="black", corner_radius=20
         )
-        self.waveform_canvas_full.grid(
-            row=0, column=2, sticky="we", padx=5, pady=5
-        )  # Changed to "we"
+        self.waveform_canvas_full.grid(row=0, column=2, sticky="we", padx=5, pady=5)
 
         self.play_btn_full = RoundedButton(
             recording_frame,
@@ -197,9 +195,7 @@ class App:
         self.waveform_canvas_trimmed = RoundedCanvas(
             recording_frame, height=50, bg="black", corner_radius=20
         )
-        self.waveform_canvas_trimmed.grid(
-            row=2, column=2, sticky="we", padx=5, pady=5
-        )  # Changed to "we"
+        self.waveform_canvas_trimmed.grid(row=2, column=2, sticky="we", padx=5, pady=5)
 
         self.play_btn_trimmed = RoundedButton(
             recording_frame,
@@ -247,6 +243,12 @@ class App:
         control_frame.grid(row=4, column=0, sticky="we", pady=(0, 0))
         control_frame.columnconfigure(0, weight=1)
 
+        # Total duration
+        self.duration_text = tk.StringVar(value="Total Duration: 0s")
+        ttk.Label(control_frame, textvariable=self.duration_text).grid(
+            row=0, column=0, sticky=tk.W, padx=5
+        )
+
         # Skip button at the bottom
         settings_btn = RoundedButton(
             control_frame,
@@ -259,7 +261,7 @@ class App:
             corner_radius=20,
             dot=False,
         )
-        settings_btn.grid(row=0, column=0, padx=5, sticky="e")
+        settings_btn.grid(row=0, column=1, padx=5, sticky="e")
 
         # Next button at the bottom
         settings_btn = RoundedButton(
@@ -273,7 +275,7 @@ class App:
             corner_radius=20,
             dot=False,
         )
-        settings_btn.grid(row=0, column=1, padx=5, sticky="e")
+        settings_btn.grid(row=0, column=2, padx=5, sticky="e")
 
     def show_settings(self) -> None:
         self.recorder.load_settings(self.settings_path)
@@ -295,12 +297,23 @@ class App:
             )
 
             self.recorder.save_settings(self.settings_path)
-            self.recorder.load_input_data()
-            self.recorder.load_output_data()
-            self.recorder.load_skipped_ids()
+            self.recorder.load_data()
 
         self.start_monitoring()
         self.load_next_sample()
+
+        self.update_duration()
+
+    def update_duration(self) -> None:
+        total_seconds = self.recorder.total_duration
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        seconds = int(total_seconds % 60)
+        milliseconds = int((total_seconds - int(total_seconds)) * 100)
+
+        self.duration_text.set(
+            f"Total Duration: {hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:02d}"
+        )
 
     def update_level_meter(self) -> None:
         level = self.recorder.get_current_level()
@@ -396,7 +409,7 @@ class App:
         self.waveform_canvas_trimmed.draw_canvas()
 
     def load_next_sample(self) -> None:
-        self.current_id = "3"
+        self.current_id = self.recorder.get_next_id()
         sample = self.recorder.get_sample_by_id(self.current_id)
         text_de = sample["de"]
 
@@ -476,14 +489,27 @@ class App:
         self.update_waveform()
 
     def save(self) -> None:
-        self.recorder.save_audio(self.current_id)
+        if self.recorder.trimmed_audio is None:
+            return
+
+        duration_s = self.recorder.save_audio(self.current_id)
         self.recorder.add_sample(
             id=self.current_id,
             text_de=self.de_text_var.get(),
             text_ch=self.ch_text_edit_var.get(),
             dialect=self.recorder.speaker_dialect,
             audio_path=f"{self.current_id}.flac",
+            duration_s=duration_s,
         )
+
+        self.recorder.audio_data = []
+        self.recorder.full_audio = None
+        self.recorder.trimmed_audio = None
+
+        self.clear_waveform_canvas()
+
+        self.update_duration()
+        self.load_next_sample()
 
     def skip(self):
         self.recorder.add_skip(self.current_id)
