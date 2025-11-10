@@ -4,6 +4,7 @@ from tkinter import ttk
 
 from platformdirs import user_config_path
 
+from helvox.ui.auto_resize_text import AutoResizingText
 from helvox.ui.button import RoundedButton
 from helvox.ui.rounded_canvas import RoundedCanvas
 from helvox.ui.settings import SettingsDialog
@@ -33,7 +34,7 @@ class App:
         self.root.geometry("800x600")
 
         # Set minimum window size
-        self.root.minsize(600, 400)
+        self.root.minsize(900, 700)
 
         # Set app icon
         icon_path = Path(__file__).parent / "resources" / "icons" / "app.ico"
@@ -72,11 +73,91 @@ class App:
         )
         settings_btn.grid(row=0, column=0, padx=5, sticky="e")
 
+        # Text frame
+        text_frame = ttk.LabelFrame(main_frame, text="Text", padding="5")
+        text_frame.grid(row=1, column=0, sticky="we", pady=5, padx=5)
+        text_frame.columnconfigure(0, weight=1)
+
+        de_text_frame = ttk.Frame(text_frame)
+        de_text_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        de_text_frame.columnconfigure(0, weight=1)
+
+        ttk.Label(de_text_frame, text="DE:").grid(row=0, column=0, sticky=tk.W, padx=0)
+
+        self.de_text_var = tk.StringVar(value="")
+        de_text_label = ttk.Label(
+            de_text_frame,
+            textvariable=self.de_text_var,
+            relief="sunken",
+            background="white",
+            foreground="#8A8A8A",
+            font=("Segoe UI", 12),
+            padding=5,
+            anchor="w",
+        )
+        de_text_label.grid(row=1, column=0, sticky="ew")
+
+        # update wraplength dynamically
+        de_text_label.bind(
+            "<Configure>",
+            lambda e: e.widget.configure(wraplength=e.width - 10),
+        )
+
+        # CH
+        ch_text_frame = ttk.Frame(text_frame)
+        ch_text_frame.grid(row=1, column=0, sticky="ew", pady=(0, 8))
+        ch_text_frame.columnconfigure(0, weight=1)
+
+        ttk.Label(ch_text_frame, text="CH (Suggestion):").grid(
+            row=0, column=0, sticky=tk.W, padx=0
+        )
+
+        self.ch_text_var = tk.StringVar(value="")
+        ch_text_label = ttk.Label(
+            ch_text_frame,
+            textvariable=self.ch_text_var,
+            relief="sunken",
+            background="white",
+            foreground="#8A8A8A",
+            font=("Segoe UI", 12),
+            padding=5,
+            anchor="w",
+        )
+        ch_text_label.grid(row=1, column=0, sticky="ew")
+
+        # update wraplength dynamically
+        ch_text_label.bind(
+            "<Configure>",
+            lambda e: e.widget.configure(wraplength=e.width - 10),
+        )
+
+        # CH (Editable)
+        ch_text_edit_frame = ttk.Frame(text_frame)
+        ch_text_edit_frame.grid(row=2, column=0, sticky="ew", pady=(0, 8))
+        ch_text_edit_frame.columnconfigure(0, weight=1)
+
+        ttk.Label(ch_text_edit_frame, text="CH (Edit):").grid(
+            row=0, column=0, sticky=tk.W, padx=0
+        )
+
+        self.ch_text_edit_var = tk.StringVar(value="")
+        self.speaker_input = AutoResizingText(
+            ch_text_edit_frame,
+            textvariable=self.ch_text_edit_var,
+            font=("Segoe UI", 12),
+            background="white",
+            foreground="#000000",
+            wrap="word",
+            padx=5,
+            pady=5,
+            min_height=2,
+            max_height=8,
+        )
+        self.speaker_input.grid(row=1, column=0, padx=(0, 0), pady=8, sticky="ew")
+
         # Recording frame
         recording_frame = ttk.LabelFrame(main_frame, text="Recording", padding="5")
-        recording_frame.grid(
-            row=1, column=0, sticky="we", pady=5, padx=5
-        )  # Changed to "we" for full width
+        recording_frame.grid(row=2, column=0, sticky="we", pady=5, padx=5)
 
         # Configure recording frame columns - column 2 expands
         recording_frame.columnconfigure(2, weight=1)
@@ -205,8 +286,14 @@ class App:
             self.recorder.update_selected_device(result["device"])
             self.recorder.speaker_id = result["speaker_id"]
             self.recorder.speaker_dialect = result["speaker_dialect"]
+            self.recorder.input_file = result["input_file"]
+            self.recorder.output_file = (
+                Path(result["output_folder"]) / result["speaker_id"] / "output.json"
+            )
 
             self.recorder.save_settings(self.settings_path)
+            self.recorder.load_input_data()
+            self.recorder.load_output_data()
 
         self.start_monitoring()
 

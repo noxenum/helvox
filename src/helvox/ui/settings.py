@@ -2,6 +2,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
+from helvox.utils.data import read_dataset
 from helvox.utils.recorder import Recorder
 
 
@@ -64,7 +65,7 @@ class SettingsDialog:
 
     def setup_ui(self) -> None:
         # Main container with padding
-        main_frame = ttk.Frame(self.dialog, padding="25")
+        main_frame = ttk.Frame(self.dialog, padding="10")
         main_frame.grid(row=0, column=0, sticky="nsew")
 
         # Configure grid weights for responsiveness
@@ -73,11 +74,23 @@ class SettingsDialog:
         main_frame.rowconfigure(3, weight=1)  # Allow spacing before buttons
         main_frame.columnconfigure(0, weight=1)
 
+        # Tabs
+        tab_control = ttk.Notebook(main_frame)
+        tab_speaker = ttk.Frame(tab_control)
+        tab_data = ttk.Frame(tab_control)
+        tab_audio = ttk.Frame(tab_control)
+
+        tab_control.add(tab_speaker, text="Speaker")
+        tab_control.add(tab_data, text="Data")
+        tab_control.add(tab_audio, text="Audio")
+
+        tab_control.grid(row=0, column=0, sticky="ew")
+
         # Speaker Settings
         speaker_frame = ttk.LabelFrame(
-            main_frame, text="Speaker Configuration", padding="15"
+            tab_speaker, text="Speaker Configuration", padding="15"
         )
-        speaker_frame.grid(row=0, column=0, sticky="ew", pady=(0, 15))
+        speaker_frame.grid(row=0, column=0, sticky="ew", padx=(10, 10), pady=(10, 0))
         speaker_frame.columnconfigure(1, weight=1)
 
         # Speaker ID
@@ -114,16 +127,51 @@ class SettingsDialog:
         )
         self.speaker_dialect.grid(row=1, column=1, padx=(0, 5), pady=8, sticky="w")
 
+        # Input File Selection
+        file_frame = ttk.LabelFrame(tab_data, text="Input File", padding="15")
+        file_frame.grid(row=0, column=0, sticky="ew", padx=(10, 10), pady=(10, 0))
+        file_frame.columnconfigure(0, weight=1)
+
+        # Folder path display
+        file_display_frame = ttk.Frame(file_frame)
+        file_display_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        file_display_frame.columnconfigure(0, weight=1)
+
+        self.file_var = tk.StringVar(value=str(self.recorder.input_file))
+        folder_label = ttk.Label(
+            file_display_frame,
+            textvariable=self.file_var,
+            wraplength=500,
+            relief="sunken",
+            background="white",
+            foreground="#333",
+            font=("Segoe UI", 9),
+            padding=5,
+        )
+        folder_label.grid(row=0, column=0, sticky="ew")
+
+        # Browse button
+        browse_file_btn = ttk.Button(
+            file_frame, text="Browse...", command=self.select_file, width=12
+        )
+        browse_file_btn.grid(row=0, column=1, pady=(0, 0), sticky="e")
+
+        # Info label
+        info_label = ttk.Label(
+            file_frame,
+            text="Select the file where the text data is stored (JSON)",
+            style="Info.TLabel",
+        )
+        info_label.grid(row=1, column=0, sticky="w", pady=(5, 0))
+
         # Output Folder Selection
-        folder_frame = ttk.LabelFrame(main_frame, text="Output Folder", padding="15")
-        folder_frame.grid(row=1, column=0, sticky="ew", pady=(0, 15))
+        folder_frame = ttk.LabelFrame(tab_data, text="Output Folder", padding="15")
+        folder_frame.grid(row=1, column=0, sticky="ew", padx=(10, 10), pady=(10, 0))
         folder_frame.columnconfigure(0, weight=1)
 
         # Folder path display
         folder_display_frame = ttk.Frame(folder_frame)
-        folder_display_frame.grid(
-            row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8)
-        )
+        folder_display_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
         folder_display_frame.columnconfigure(0, weight=1)
 
         self.folder_var = tk.StringVar(value=str(self.recorder.output_folder))
@@ -132,24 +180,32 @@ class SettingsDialog:
             textvariable=self.folder_var,
             wraplength=500,
             relief="sunken",
-            padding=8,
             background="white",
             foreground="#333",
             font=("Segoe UI", 9),
+            padding=5,
         )
         folder_label.grid(row=0, column=0, sticky="ew")
 
         # Browse button
         browse_btn = ttk.Button(
-            folder_frame, text="Browse...", command=self.select_folder, width=15
+            folder_frame, text="Browse...", command=self.select_folder, width=12
         )
-        browse_btn.grid(row=1, column=0, pady=(0, 0), sticky="e")
+        browse_btn.grid(row=0, column=1, pady=(0, 0), sticky="e")
+
+        # Info label
+        info_label = ttk.Label(
+            folder_frame,
+            text="Select the folder where the audio recordings should be saved",
+            style="Info.TLabel",
+        )
+        info_label.grid(row=1, column=0, sticky="w", pady=(5, 0))
 
         # Audio Device Selection
         device_frame = ttk.LabelFrame(
-            main_frame, text="Audio Input Device", padding="15"
+            tab_audio, text="Audio Input Device", padding="15"
         )
-        device_frame.grid(row=2, column=0, sticky="ew", pady=(0, 15))
+        device_frame.grid(row=2, column=0, sticky="ew", padx=(10, 10), pady=(10, 0))
         device_frame.columnconfigure(0, weight=1)
 
         # Device selection row
@@ -219,6 +275,15 @@ class SettingsDialog:
         if folder:
             self.folder_var.set(str(Path(folder)))
 
+    def select_file(self) -> None:
+        file = filedialog.askopenfilename(
+            title="Select Input File", filetypes=[("JSON files", "*.json")]
+        )
+
+        if file:
+            self.file_var.set(str(Path(file)))
+            self.recorder.input_file = file
+
     def refresh_devices(self) -> None:
         """Refresh available audio devices."""
         self.recorder.refresh_audio_devices()
@@ -273,6 +338,7 @@ class SettingsDialog:
             "speaker_dialect": self.dialect_var.get(),
             "output_folder": self.folder_var.get(),
             "device": self.device_var.get(),
+            "input_file": self.file_var.get(),
         }
         self.dialog.destroy()
 

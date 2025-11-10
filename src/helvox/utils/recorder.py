@@ -7,6 +7,7 @@ import sounddevice as sd
 import soundfile as sf
 from sounddevice import CallbackFlags
 
+from helvox.utils.data import read_dataset
 from helvox.utils.trim import trim_silence
 
 
@@ -26,6 +27,7 @@ class Recorder:
         self.device_map = {}
         self.current_level = -60.0  # dB
         self.full_audio = None
+        self.trimmed_audio = None
 
         self.monitor_stream = None
         self.stream = None
@@ -33,6 +35,13 @@ class Recorder:
         self.selected_device = ""
         self.speaker_id = "unknown"
         self.speaker_dialect = "AG"
+        self.input_file = ""
+        self.output_file = ""
+
+        self.input_data = []
+        self.input_index = {}
+        self.output_data = []
+        self.output_index = {}
 
     def get_audio_devices(self) -> dict:
         devices = sd.query_devices()
@@ -158,7 +167,7 @@ class Recorder:
             self.start_monitoring()
 
     def save_audio(self, filename: str) -> None:
-        audio_path = self.output_folder / self.speaker_id / f"{filename}.flac"
+        audio_path = self.output_folder / self.speaker_id / "audio" / f"{filename}.flac"
 
         if not audio_path.parent.exists():
             audio_path.parent.mkdir(parents=True, exist_ok=True)
@@ -245,6 +254,7 @@ class Recorder:
             "selected_device": self.selected_device,
             "speaker_id": self.speaker_id,
             "speaker_dialect": self.speaker_dialect,
+            "input_file": self.input_file,
         }
 
         with open(config_path, "w") as configfile:
@@ -264,3 +274,27 @@ class Recorder:
         self.selected_device = settings.get("selected_device", self.selected_device)
         self.speaker_id = settings.get("speaker_id", self.speaker_id)
         self.speaker_dialect = settings.get("speaker_dialect", self.speaker_dialect)
+        self.input_file = settings.get("input_file", self.input_file)
+
+        self.output_file = self.output_folder / self.speaker_id / "output.json"
+
+        self.load_input_data()
+        self.load_output_data()
+
+    def load_input_data(self) -> None:
+        if len(self.input_file) > 0 and Path(self.input_file).exists():
+            self.input_data = read_dataset(Path(self.input_file))
+            self.input_index = {str(d["id"]): d for d in self.input_data}
+        else:
+            self.input_data = []
+
+    def load_output_data(self) -> None:
+        if len(str(self.output_file)) > 0 and Path(self.output_file).exists():
+            self.output_data = read_dataset(Path(self.output_file))
+            self.output_index = {str(d["id"]): d for d in self.output_data}
+        else:
+            self.output_data = []
+
+    def get_sample_by_id(self, id: Union[int, dict]) -> dict:
+        id_str = str(id)
+        return self.output_index.get(id_str) or self.input_index.get(id_str) or {}
