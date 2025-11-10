@@ -53,7 +53,7 @@ jobs:
       - name: Generate checksums
         shell: bash
         run: |
-          certutil -hashfile "dist/${{ env.APP_NAME }}.exe" SHA256 | findstr /V "hash" > dist/${{ env.APP_NAME }}.exe.sha256
+          certutil -hashfile "dist/${{ env.APP_NAME }}.exe" SHA256 | awk 'NR==2{print $1}' > "dist/${{ env.APP_NAME }}.exe.sha256"
 
       - name: Upload build artifacts (CI)
         uses: actions/upload-artifact@v4
