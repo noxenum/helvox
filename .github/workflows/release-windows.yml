@@ -50,25 +50,18 @@ jobs:
         run: |
           test -f "dist/${{ env.APP_NAME }}.exe" || (echo "EXE not found!" && exit 1)
 
-      - name: Generate checksums
-        shell: bash
-        run: |
-          certutil -hashfile "dist/${{ env.APP_NAME }}.exe" SHA256 | awk 'NR==2{print $1}' > "dist/${{ env.APP_NAME }}.exe.sha256"
-
       - name: Upload build artifacts (CI)
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-Windows
           path: |
             dist/${{ env.APP_NAME }}.exe
-            dist/${{ env.APP_NAME }}.exe.sha256
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/${{ env.APP_NAME }}.exe
-            dist/${{ env.APP_NAME }}.exe.sha256
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
         env:
