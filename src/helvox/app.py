@@ -251,7 +251,7 @@ class App:
         settings_btn = RoundedButton(
             control_frame,
             text="Skip",
-            command=self.save_audio,
+            command=self.skip,
             bg_color="#E6E6E6",
             fg_color="#363636",
             width=120,
@@ -264,8 +264,8 @@ class App:
         # Next button at the bottom
         settings_btn = RoundedButton(
             control_frame,
-            text="Next",
-            command=self.save_audio,
+            text="Save & Next",
+            command=self.save,
             bg_color="#3B32B3",
             fg_color="#F5F5F5",
             width=120,
@@ -290,12 +290,17 @@ class App:
             self.recorder.output_file = (
                 Path(result["output_folder"]) / result["speaker_id"] / "output.json"
             )
+            self.recorder.skipped_file = (
+                Path(result["output_folder"]) / result["speaker_id"] / "skipped.txt"
+            )
 
             self.recorder.save_settings(self.settings_path)
             self.recorder.load_input_data()
             self.recorder.load_output_data()
+            self.recorder.load_skipped_ids()
 
         self.start_monitoring()
+        self.load_next_sample()
 
     def update_level_meter(self) -> None:
         level = self.recorder.get_current_level()
@@ -390,6 +395,20 @@ class App:
         self.waveform_canvas_full.draw_canvas()
         self.waveform_canvas_trimmed.draw_canvas()
 
+    def load_next_sample(self) -> None:
+        self.current_id = "3"
+        sample = self.recorder.get_sample_by_id(self.current_id)
+        text_de = sample["de"]
+
+        if "ch" in sample:
+            text_ch = sample["ch"]
+        else:
+            text_ch = sample[f"ch_{self.recorder.speaker_dialect.lower()}"]
+
+        self.de_text_var.set(text_de)
+        self.ch_text_var.set(text_ch)
+        self.ch_text_edit_var.set(text_ch)
+
     def update_waveform(self) -> None:
         if self.recorder.full_audio is None or self.recorder.trimmed_audio is None:
             return
@@ -453,11 +472,22 @@ class App:
                     joinstyle=tk.ROUND,
                 )
 
-    def save_audio(self) -> None:
-        self.recorder.save_audio("test")
-
     def configure_handler(self, event):
         self.update_waveform()
+
+    def save(self) -> None:
+        self.recorder.save_audio(self.current_id)
+        self.recorder.add_sample(
+            id=self.current_id,
+            text_de=self.de_text_var.get(),
+            text_ch=self.ch_text_edit_var.get(),
+            dialect=self.recorder.speaker_dialect,
+            audio_path=f"{self.current_id}.flac",
+        )
+
+    def skip(self):
+        self.recorder.add_skip(self.current_id)
+        self.load_next_sample()
 
     def on_closing(self) -> None:
         self.recorder.stop_monitoring()

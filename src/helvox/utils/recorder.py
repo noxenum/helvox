@@ -1,4 +1,5 @@
 import configparser
+import json
 from pathlib import Path
 from typing import Union
 
@@ -37,15 +38,16 @@ class Recorder:
         self.speaker_dialect = "AG"
         self.input_file = ""
         self.output_file = ""
+        self.skipped_file = ""
 
         self.input_data = []
         self.input_index = {}
         self.output_data = []
         self.output_index = {}
+        self.skipped_ids = []
 
     def get_audio_devices(self) -> dict:
         devices = sd.query_devices()
-        devices = [dict(d) for d in devices]
         device_map = {}
 
         for idx, device in enumerate(devices):
@@ -277,9 +279,11 @@ class Recorder:
         self.input_file = settings.get("input_file", self.input_file)
 
         self.output_file = self.output_folder / self.speaker_id / "output.json"
+        self.skipped_file = self.output_folder / self.speaker_id / "skipped.txt"
 
         self.load_input_data()
         self.load_output_data()
+        self.load_skipped_ids()
 
     def load_input_data(self) -> None:
         if len(self.input_file) > 0 and Path(self.input_file).exists():
@@ -295,6 +299,43 @@ class Recorder:
         else:
             self.output_data = []
 
-    def get_sample_by_id(self, id: Union[int, dict]) -> dict:
+    def load_skipped_ids(self) -> None:
+        if len(str(self.skipped_file)) > 0 and Path(self.skipped_file).exists():
+            with open(self.skipped_file, mode="r", encoding="utf-8") as f:
+                self.skipped_ids = [line.strip() for line in f.readlines()]
+        else:
+            self.skipped_ids = []
+
+    def get_sample_by_id(self, id: Union[int, str]) -> dict:
         id_str = str(id)
         return self.output_index.get(id_str) or self.input_index.get(id_str) or {}
+
+    def add_skip(self, id: Union[int, str]) -> None:
+        if id in self.skipped_ids:
+            return
+
+        self.skipped_ids.append(str(id))
+        if not Path(self.skipped_file).parent.exists():
+            Path(self.skipped_file).parent.mkdir(parents=True, exist_ok=True)
+
+        with open(self.skipped_file, mode="a", encoding="utf-8") as f:
+            f.write(f"{id}\n")
+
+    def add_sample(
+        self, id: str, text_de: str, text_ch: str, dialect: str, audio_path: str
+    ) -> None:
+        sample = {
+            "id": id,
+            "de": text_de,
+            "ch": text_ch,
+            "dialect": dialect.lower(),
+            "audio": audio_path,
+        }
+
+        self.output_data.append(sample)
+
+        if not Path(self.skipped_file).parent.exists():
+            Path(self.skipped_file).parent.mkdir(parents=True, exist_ok=True)
+
+        with open(self.output_file, mode="w", encoding="utf-8") as f:
+            json.dump(self.output_data, f, ensure_ascii=False, indent=4)

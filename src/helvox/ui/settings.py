@@ -2,7 +2,6 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from helvox.utils.data import read_dataset
 from helvox.utils.recorder import Recorder
 
 
@@ -23,6 +22,12 @@ class SettingsDialog:
 
         # Center the dialog
         self.center_dialog(parent)
+
+        # Set app icon
+        icon_path = Path(__file__).parent.parent / "resources" / "icons" / "app.ico"
+        print(icon_path)
+        if icon_path.exists():
+            self.dialog.iconbitmap(icon_path)
 
         # Configure style
         self.setup_styles()
