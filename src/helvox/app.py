@@ -410,6 +410,9 @@ class App:
 
     def load_next_sample(self) -> None:
         self.current_id = self.recorder.get_next_id()
+        if self.current_id is None:
+            return
+
         sample = self.recorder.get_sample_by_id(self.current_id)
         text_de = sample["de"]
 

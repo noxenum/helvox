@@ -1,7 +1,7 @@
 import configparser
 import json
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 import sounddevice as sd
@@ -379,7 +379,7 @@ class Recorder:
 
         self.total_duration = self.calc_total_duration()
 
-    def get_next_id(self) -> str:
+    def get_next_id(self) -> Optional[str]:
         if not self.open_ids:
-            raise Exception("Empty list")
+            return None
         return self.open_ids.pop(0)
