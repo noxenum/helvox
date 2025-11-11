@@ -1,9 +1,21 @@
-# Helvox
+<div align="center">
+  <a href="https://github.com/noxenum/helvox">
+    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  </a>
+
+  <h3 align="center">Helvox</h3>
+
+  <p align="center">
+    A simple recording tool for Swiss German speech data.
+  </p>
+</div>
+
+## About
+
+![Helvox Screen Shot][ui-screenshot]
 
 **Helvox** is an open-source GUI application for recording audio data in Swiss German dialects.  
 It provides a simple and efficient interface for collecting high-quality speech recordings, making it ideal for linguistic research, dataset creation, and dialect analysis.
-
----
 
 ## Features
 
@@ -12,23 +24,7 @@ It provides a simple and efficient interface for collecting high-quality speech 
 - Built with Python and modern audio libraries
 - Cross-platform (developed primarily for Windows)
 - Automatic voice activity detection for consistent padding
-
----
-
-## Dependencies
-
-Helvox relies on a few core Python libraries for audio capture, processing, and platform management:
-
-```bash
-sounddevice
-soundfile
-platformdirs
-webrtcvad
-```
-
-These dependencies will be installed automatically when setting up the project.
-
----
+- Fully local and offline data collection
 
 ## Development Setup
 
@@ -47,8 +43,6 @@ helvox
 
 This will start the Helvox GUI application.
 
----
-
 ## Build Instructions (Windows)
 
 To create a standalone executable for Windows:
@@ -64,8 +58,6 @@ After building, your packaged application will be available at:
 dist/Helvox.exe
 ```
 
----
-
 ## Contributing
 
 Contributions are welcome.
@@ -77,16 +69,15 @@ If you’d like to improve Helvox or add new features:
 4. Push to your fork: `git push origin feature/my-feature`
 5. Open a Pull Request
 
----
-
 ## License
 
 This project is licensed under the **MIT License**.
 See the [LICENSE](LICENSE) file for details.
 
----
-
 ## Acknowledgements
 
 Helvox was built to support data collection and research in Swiss German linguistics (e.g., speech-to-text, text-to-speech).
 Special thanks to all contributors and researchers working on dialect preservation and computational linguistics.
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[ui-screenshot]: images/screenshot.png
