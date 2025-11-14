@@ -26,6 +26,26 @@ It provides a simple and efficient interface for collecting high-quality speech 
 - Automatic voice activity detection for consistent padding
 - Fully local and offline data collection
 
+## Input Format
+
+Example:
+```json
+[
+    {
+        "id": "bb9ebca5-09b3-4cad-bad3-65d7f9969589",
+        "de": "Hallo Welt.",
+        "ch_ag": "Hallo Wält.",
+        "ch_be": "Hallo Wäut."
+    },
+    {
+        "id": "6f971113-eac5-4279-a6bb-da736384e9b0",
+        "de": "Ich war heute draussen.",
+        "ch_ag": "Ich bi hüt dusse gsi.",
+        "ch_be": "I bi hüt dussä gsi"
+    }
+]
+```
+
 ## Development Setup
 
 To run Helvox locally in development mode:
