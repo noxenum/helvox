@@ -37,9 +37,10 @@ class App:
         self.root.minsize(900, 700)
 
         # Set app icon
-        icon_path = Path(__file__).parent / "resources" / "icons" / "app.ico"
+        icon_path = Path(__file__).parent / "resources" / "icons" / "app.png"
         if icon_path.exists():
-            self.root.iconbitmap(icon_path)
+            icon = tk.PhotoImage(file=icon_path)
+            self.root.iconphoto(False, icon)
 
         # Bind configure event
         self.root.bind("<Configure>", self.configure_handler)
