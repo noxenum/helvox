@@ -52,6 +52,11 @@ jobs:
       - name: Install project (build extras)
         run: pip install ".[build]"
 
+      - name: Verify tkinter
+        if: runner.os == 'macOS'
+        run: |
+          python -c "import tkinter; print(tkinter.TkVersion)"
+
       - name: Install UPX
         if: runner.os == 'Windows'
         run: choco install upx -y
