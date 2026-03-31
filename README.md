@@ -78,6 +78,21 @@ After building, your packaged application will be available at:
 dist/Helvox.exe
 ```
 
+## Build Instructions (macOS)
+
+To create a macOS app bundle:
+
+```bash
+pip install -e ".[build]"
+pyinstaller macos.spec
+```
+
+After building, the packaged application will be available at:
+
+```
+dist/Helvox.app
+```
+
 ## Contributing
 
 Contributions are welcome.

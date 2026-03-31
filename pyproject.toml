@@ -4,14 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "helvox"
-version = "0.1.0"
+version = "0.2.0"
 description = "A simple recording tool for Swiss German speech data."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
-authors = [
-    {name = "Claudio Paonessa", email = "claudio.paonessa@noxenum.io"}
-]
+license = { text = "MIT" }
+authors = [{ name = "Claudio Paonessa", email = "claudio.paonessa@noxenum.io" }]
 keywords = ["audio", "recording", "tkinter", "gui", "desktop"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -28,7 +26,7 @@ dependencies = [
     "sounddevice>=0.5.3",
     "soundfile>=0.13.1",
     "platformdirs>=4.5.0",
-    "webrtcvad>=2.0.10"
+    "webrtcvad>=2.0.10",
 ]
 
 [project.optional-dependencies]
@@ -39,10 +37,7 @@ dev = [
     "ruff>=0.3.0",
     "mypy>=1.8.0",
 ]
-build = [
-    "pyinstaller>=6.0.0",
-    "pillow>=10.0.0",
-]
+build = ["pyinstaller>=6.8.0", "pillow>=10.0.0", "setuptools<70"]
 
 [project.scripts]
 helvox = "helvox.main:main"
@@ -65,7 +60,7 @@ line-length = 88
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]  # pycodestyle errors, pyflakes, isort
+select = ["E", "F", "I"] # pycodestyle errors, pyflakes, isort
 
 [tool.mypy]
 python_version = "3.10"
