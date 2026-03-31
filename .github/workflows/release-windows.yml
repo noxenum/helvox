@@ -47,10 +47,20 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Upgrade pip & build tools
-        run: python -m pip install --upgrade pip wheel setuptools
+        run: python -m pip install --upgrade pip wheel "setuptools<70"
         
       - name: Install project (build extras)
         run: pip install ".[build]"
+
+      - name: Show build tool versions
+        shell: bash
+        run: |
+          python - <<'PY'
+          import setuptools
+          import PyInstaller
+          print("setuptools", setuptools.__version__)
+          print("pyinstaller", PyInstaller.__version__)
+          PY
 
       - name: Verify tkinter
         if: runner.os == 'macOS'
