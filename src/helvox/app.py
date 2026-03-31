@@ -8,6 +8,7 @@ from helvox.ui.auto_resize_text import AutoResizingText
 from helvox.ui.button import RoundedButton
 from helvox.ui.rounded_canvas import RoundedCanvas
 from helvox.ui.settings import SettingsDialog
+from helvox.utils.platform import app_font, default_recordings_dir
 from helvox.utils.recorder import Recorder
 
 
@@ -16,7 +17,7 @@ class App:
         self.root = root
 
         self.recorder = Recorder(
-            output_folder=Path.cwd() / "recordings", sample_rate=48000, channels=1
+            output_folder=default_recordings_dir(), sample_rate=48000, channels=1
         )
 
         self.settings_path = (
@@ -92,7 +93,7 @@ class App:
             relief="sunken",
             background="white",
             foreground="#8A8A8A",
-            font=("Segoe UI", 12),
+            font=app_font(12),
             padding=5,
             anchor="w",
         )
@@ -120,7 +121,7 @@ class App:
             relief="sunken",
             background="white",
             foreground="#8A8A8A",
-            font=("Segoe UI", 12),
+            font=app_font(12),
             padding=5,
             anchor="w",
         )
@@ -145,7 +146,7 @@ class App:
         self.speaker_input = AutoResizingText(
             ch_text_edit_frame,
             textvariable=self.ch_text_edit_var,
-            font=("Segoe UI", 12),
+            font=app_font(12),
             background="white",
             foreground="#000000",
             wrap="word",

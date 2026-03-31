@@ -2,6 +2,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
+from helvox.utils.platform import app_font
 from helvox.utils.recorder import Recorder
 
 
@@ -60,13 +61,13 @@ class SettingsDialog:
         style = ttk.Style()
 
         # Custom styles
-        style.configure("Title.TLabel", font=("Segoe UI", 8))
-        style.configure("Info.TLabel", font=("Segoe UI", 9), foreground="#666")
-        style.configure("TLabelframe.Label", font=("Segoe UI", 9, "bold"))
+        style.configure("Title.TLabel", font=app_font(8))
+        style.configure("Info.TLabel", font=app_font(9), foreground="#666")
+        style.configure("TLabelframe.Label", font=app_font(9, bold=True))
         style.configure("TLabelframe", padding=15)
 
         # Button styles
-        style.configure("Accent.TButton", font=("Segoe UI", 9, "bold"))
+        style.configure("Accent.TButton", font=app_font(9, bold=True))
 
     def setup_ui(self) -> None:
         # Main container with padding
@@ -104,7 +105,7 @@ class SettingsDialog:
         )
         self.speaker_var = tk.StringVar(value=self.recorder.speaker_id)
         self.speaker_input = ttk.Entry(
-            speaker_frame, textvariable=self.speaker_var, font=("Segoe UI", 9)
+            speaker_frame, textvariable=self.speaker_var, font=app_font(9)
         )
         self.speaker_input.grid(row=1, column=0, padx=(0, 5), pady=8, sticky="ew")
 
@@ -117,7 +118,7 @@ class SettingsDialog:
             speaker_frame,
             textvariable=self.dialect_var,
             state="readonly",
-            font=("Segoe UI", 9),
+            font=app_font(9),
             width=30,
         )
         self.speaker_dialect["values"] = (
@@ -150,7 +151,7 @@ class SettingsDialog:
             relief="sunken",
             background="white",
             foreground="#333",
-            font=("Segoe UI", 9),
+            font=app_font(9),
             padding=5,
         )
         folder_label.grid(row=0, column=0, sticky="ew")
@@ -187,7 +188,7 @@ class SettingsDialog:
             relief="sunken",
             background="white",
             foreground="#333",
-            font=("Segoe UI", 9),
+            font=app_font(9),
             padding=5,
         )
         folder_label.grid(row=0, column=0, sticky="ew")
@@ -223,7 +224,7 @@ class SettingsDialog:
             device_row,
             textvariable=self.device_var,
             state="readonly",
-            font=("Segoe UI", 9),
+            font=app_font(9),
         )
         self.device_combo.grid(row=0, column=0, padx=(0, 10), pady=5, sticky="ew")
 
