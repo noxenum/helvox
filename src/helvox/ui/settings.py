@@ -24,9 +24,10 @@ class SettingsDialog:
         self.center_dialog(parent)
 
         # Set app icon
-        icon_path = Path(__file__).parent.parent / "resources" / "icons" / "app.ico"
+        icon_path = Path(__file__).parent.parent / "resources" / "icons" / "app.png"
         if icon_path.exists():
-            self.dialog.iconbitmap(icon_path)
+            icon = tk.PhotoImage(file=icon_path)
+            self.dialog.iconphoto(False, icon)
 
         # Configure style
         self.setup_styles()

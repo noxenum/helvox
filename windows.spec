@@ -39,5 +39,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='src/helvox/resources/icons/app.ico'
+    icon='src/helvox/resources/icons/app.png'
 )
